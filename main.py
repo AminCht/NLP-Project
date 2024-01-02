@@ -1,4 +1,13 @@
+import glob
+
 from nltk.stem import PorterStemmer
+import os
+
+comp_train_set_count = 0
+rec_train_set_count = 0
+sci_train_set_count = 0
+soc_train_set_count = 0
+talk_train_set_count = 0
 
 
 def read_file(file_path):
@@ -43,6 +52,13 @@ def print_text_processing_menu():
     print("4. Stemming")
 
 
+def print_classification_menu():
+    print("1. Make Dic")
+    print("2. Calculate Probability(p(C))")
+    print("3. P(w|c)")
+    print("4. Stemming")
+
+
 def tokenization(content):
     punctuation = set('!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~')
     for char in punctuation:
@@ -62,7 +78,7 @@ def tokenization(content):
     return tokens
 
 
-def lowerCase_folding(content):
+def lowercase_folding(content):
     output_file_path = 'TextProcessing/Lowercase.txt'
     content = content.lower()
     write_file(output_file_path, content)
@@ -96,7 +112,7 @@ def text_processing():
             if operation == 1:
                 write_tokens('TextProcessing/tokens.txt', tokens)
             elif operation == 2:
-                lowerCase_folding(text_content)
+                lowercase_folding(text_content)
             elif operation == 3:
                 tokens_count(tokens)
             elif operation == 4:
@@ -113,8 +129,71 @@ def spell_correction():
     print("You selected Option 2")
 
 
+def read_classification_files(directory_path):
+    text_files = glob.glob(os.path.join(directory_path, '*.txt'))
+    combined_content = ''
+    if "Comp" in directory_path:
+        global comp_train_set_count
+        comp_train_set_count = len(text_files)
+    elif "rec" in directory_path:
+        global rec_train_set_count
+        rec_train_set_count = len(text_files)
+    elif "sci" in directory_path:
+        global sci_train_set_count
+        sci_train_set_count = len(text_files)
+    elif "soc" in directory_path:
+        global soc_train_set_count
+        soc_train_set_count = len(text_files)
+    else:
+        global talk_train_set_count
+        talk_train_set_count = len(text_files)
+    for file_path in text_files:
+        with open(file_path, 'r') as file:
+            content = file.read()
+            combined_content += content + '\n'
+
+    return combined_content
+
+def words_count(tokens):
+    word_counts = {}
+    for token in tokens:
+        if token in word_counts:
+            word_counts[token] += 1
+        else:
+            word_counts[token] = 1
+    for word, count in word_counts.items():
+        print(f"The word '{word}' appears {count} times in the list.")
+    return word_counts
+
+
+def calculate_class_probabilities():
+    print(comp_train_set_count)
+    print(rec_train_set_count)
+    comp_probability = comp_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
+    rec_probability = rec_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
+    sci_probability = sci_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
+    soc_probability = soc_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
+    talk_probability = talk_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
+
+    print(f"P(comp) is {round(comp_probability, 2)}")
+    print(f"P(rec) is {round(rec_probability, 2)}")
+    print(f"P(sci) is {round(sci_probability, 2)}")
+    print(f"P(soc) is {round(soc_probability, 2)}")
+    print(f"P(talk) is {round(talk_probability, 2)}")
+
+
 def text_classification():
-    print("You selected Option 3")
+    comp_train_set = read_classification_files('Classification/Comp.graphics/train')
+    rec_train_set = read_classification_files('Classification/rec.autos/train')
+    sci_train_set = read_classification_files('Classification/sci.electronics/train')
+    soc_train_set = read_classification_files('Classification/soc.religion.christian/train')
+    talk_train_set = read_classification_files('Classification/talk.politics.mideast/train')
+    comp_train_set = comp_train_set.split()
+    comp_dict = words_count(comp_train_set)
+    calculate_class_probabilities()
+
+
+
 
 
 if __name__ == '__main__':
