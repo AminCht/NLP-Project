@@ -1,5 +1,6 @@
 import glob
-
+import math
+import numpy as np
 from nltk.stem import PorterStemmer
 import os
 
@@ -8,6 +9,7 @@ rec_train_set_count = 0
 sci_train_set_count = 0
 soc_train_set_count = 0
 talk_train_set_count = 0
+files_name_list = []
 
 
 def read_file(file_path):
@@ -98,7 +100,8 @@ def tokens_count(tokens):
 def stemming(tokens):
     stemmer = PorterStemmer()
     stemmed_words = [stemmer.stem(token) for token in tokens]
-    write_tokens('TextProcessing/stemming.txt', stemmed_words)
+   # write_tokens('TextProcessing/stemming.txt', stemmed_words)
+    return stemmed_words
 
 
 def text_processing():
@@ -150,9 +153,26 @@ def read_classification_files(directory_path):
     for file_path in text_files:
         with open(file_path, 'r') as file:
             content = file.read()
+            content = content.lower()
             combined_content += content + '\n'
 
     return combined_content
+
+
+def read_test_set(directory_path):
+    text_files = glob.glob(os.path.join(directory_path, '*.txt'))
+    global files_name_list
+    files_name_list = []
+    content = []
+    for file_path in text_files:
+        with open(file_path, 'r') as file:
+            files_name_list.append(file.name)
+            file_text = file.read()
+            file_text = file_text.lower()
+            content.append(file_text)
+
+    return content
+
 
 def words_count(tokens):
     word_counts = {}
@@ -161,25 +181,94 @@ def words_count(tokens):
             word_counts[token] += 1
         else:
             word_counts[token] = 1
-    for word, count in word_counts.items():
-        print(f"The word '{word}' appears {count} times in the list.")
+    # for word, count in word_counts.items():
+    #     print(f"The word '{word}' appears {count} times in the list.")
     return word_counts
 
 
 def calculate_class_probabilities():
-    print(comp_train_set_count)
-    print(rec_train_set_count)
-    comp_probability = comp_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
-    rec_probability = rec_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
-    sci_probability = sci_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
-    soc_probability = soc_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
-    talk_probability = talk_train_set_count/(comp_train_set_count+rec_train_set_count+soc_train_set_count+sci_train_set_count+talk_train_set_count)
+    comp_probability = comp_train_set_count / (
+            comp_train_set_count + rec_train_set_count + soc_train_set_count + sci_train_set_count + talk_train_set_count)
+    rec_probability = rec_train_set_count / (
+            comp_train_set_count + rec_train_set_count + soc_train_set_count + sci_train_set_count + talk_train_set_count)
+    sci_probability = sci_train_set_count / (
+            comp_train_set_count + rec_train_set_count + soc_train_set_count + sci_train_set_count + talk_train_set_count)
+    soc_probability = soc_train_set_count / (
+            comp_train_set_count + rec_train_set_count + soc_train_set_count + sci_train_set_count + talk_train_set_count)
+    talk_probability = talk_train_set_count / (
+            comp_train_set_count + rec_train_set_count + soc_train_set_count + sci_train_set_count + talk_train_set_count)
 
-    print(f"P(comp) is {round(comp_probability, 2)}")
-    print(f"P(rec) is {round(rec_probability, 2)}")
-    print(f"P(sci) is {round(sci_probability, 2)}")
-    print(f"P(soc) is {round(soc_probability, 2)}")
-    print(f"P(talk) is {round(talk_probability, 2)}")
+    # print(f"P(comp) is {round(comp_probability, 2)}")
+    # print(f"P(rec) is {round(rec_probability, 2)}")
+    # print(f"P(sci) is {round(sci_probability, 2)}")
+    # print(f"P(soc) is {round(soc_probability, 2)}")
+    # print(f"P(talk) is {round(talk_probability, 2)}")
+    return round(comp_probability, 2), round(rec_probability, 2), round(sci_probability, 2), round(soc_probability, 2), \
+           round(talk_probability, 2)
+
+
+def calculate_pc(test_set, words_dict, prob):
+    list = []
+    word_comp_prob = prob
+    list.append(word_comp_prob)
+    for word in test_set:
+        if word in words_dict:
+            word_count = words_dict[word]
+        else:
+            word_count = 1
+        word_comp_prob = (word_count / (sum(words_dict.values()) + len(words_dict)))
+        list.append(word_comp_prob)
+    answer = np.log(list)
+    answer = np.sum(answer)
+    return answer
+
+
+def calculate_class(test_set, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob,
+                    soc_prob, talk_prob):
+
+    for i in range(len(test_set)):
+        comp_test_set = test_set[i].split()
+        comp_test_set = stemming(comp_test_set)
+        word_comp_prob = calculate_pc(comp_test_set, comp_dict, comp_prob)
+        word_rec_prob = calculate_pc(comp_test_set, rec_dict, rec_prob)
+        word_sci_prob = calculate_pc(comp_test_set, sci_dict, sci_prob)
+        word_soc_prob = calculate_pc(comp_test_set, soc_dict, soc_prob)
+        word_talk_prob = calculate_pc(comp_test_set, talk_dict, talk_prob)
+        if word_comp_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
+            print(word_comp_prob)
+            print(word_rec_prob)
+            print(word_sci_prob)
+            print(word_soc_prob)
+            print(word_talk_prob)
+            print(f"{files_name_list[i]} belong to comp")
+        elif word_rec_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
+            print(word_comp_prob)
+            print(word_rec_prob)
+            print(word_sci_prob)
+            print(word_soc_prob)
+            print(word_talk_prob)
+            print(f"{files_name_list[i]} belong to rec")
+        elif word_sci_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
+            print(word_comp_prob)
+            print(word_rec_prob)
+            print(word_sci_prob)
+            print(word_soc_prob)
+            print(word_talk_prob)
+            print(f"{files_name_list[i]} belong to sci")
+        elif word_soc_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
+            print(word_comp_prob)
+            print(word_rec_prob)
+            print(word_sci_prob)
+            print(word_soc_prob)
+            print(word_talk_prob)
+            print(f"{files_name_list[i]} belong to soc")
+        else:
+            print(word_comp_prob)
+            print(word_rec_prob)
+            print(word_sci_prob)
+            print(word_soc_prob)
+            print(word_talk_prob)
+            print(f"{files_name_list[i]} belong to talk")
 
 
 def text_classification():
@@ -189,11 +278,36 @@ def text_classification():
     soc_train_set = read_classification_files('Classification/soc.religion.christian/train')
     talk_train_set = read_classification_files('Classification/talk.politics.mideast/train')
     comp_train_set = comp_train_set.split()
+    rec_train_set = rec_train_set.split()
+    sci_train_set = sci_train_set.split()
+    soc_train_set = soc_train_set.split()
+    talk_train_set = talk_train_set.split()
+    comp_train_set = stemming(comp_train_set)
+    rec_train_set = stemming(rec_train_set)
+    sci_train_set = stemming(sci_train_set)
+    soc_train_set = stemming(soc_train_set)
+    talk_train_set = stemming(talk_train_set)
     comp_dict = words_count(comp_train_set)
-    calculate_class_probabilities()
-
-
-
+    rec_dict = words_count(rec_train_set)
+    sci_dict = words_count(sci_train_set)
+    soc_dict = words_count(soc_train_set)
+    talk_dict = words_count(talk_train_set)
+    comp_prob, rec_prob, sci_prob, soc_prob, talk_prob = calculate_class_probabilities()
+    # test = read_test_set('Classification/Comp.graphics/test')
+    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+    #                 talk_prob)
+    # test = read_test_set('Classification/rec.autos/test')
+    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+    #                 talk_prob)
+    # test = read_test_set('Classification/sci.electronics/test')
+    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+    #                 talk_prob)
+    # test = read_test_set('Classification/soc.religion.christian/test')
+    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+    #                 talk_prob)
+    # test = read_test_set('Classification/talk.politics.mideast/test')
+    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+    #                 talk_prob)
 
 
 if __name__ == '__main__':
