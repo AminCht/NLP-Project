@@ -235,39 +235,14 @@ def calculate_class(test_set, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict
         word_soc_prob = calculate_pc(comp_test_set, soc_dict, soc_prob)
         word_talk_prob = calculate_pc(comp_test_set, talk_dict, talk_prob)
         if word_comp_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
-            print(word_comp_prob)
-            print(word_rec_prob)
-            print(word_sci_prob)
-            print(word_soc_prob)
-            print(word_talk_prob)
             print(f"{files_name_list[i]} belong to comp")
         elif word_rec_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
-            print(word_comp_prob)
-            print(word_rec_prob)
-            print(word_sci_prob)
-            print(word_soc_prob)
-            print(word_talk_prob)
             print(f"{files_name_list[i]} belong to rec")
         elif word_sci_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
-            print(word_comp_prob)
-            print(word_rec_prob)
-            print(word_sci_prob)
-            print(word_soc_prob)
-            print(word_talk_prob)
             print(f"{files_name_list[i]} belong to sci")
         elif word_soc_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
-            print(word_comp_prob)
-            print(word_rec_prob)
-            print(word_sci_prob)
-            print(word_soc_prob)
-            print(word_talk_prob)
             print(f"{files_name_list[i]} belong to soc")
         else:
-            print(word_comp_prob)
-            print(word_rec_prob)
-            print(word_sci_prob)
-            print(word_soc_prob)
-            print(word_talk_prob)
             print(f"{files_name_list[i]} belong to talk")
 
 
@@ -293,21 +268,21 @@ def text_classification():
     soc_dict = words_count(soc_train_set)
     talk_dict = words_count(talk_train_set)
     comp_prob, rec_prob, sci_prob, soc_prob, talk_prob = calculate_class_probabilities()
-    # test = read_test_set('Classification/Comp.graphics/test')
-    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-    #                 talk_prob)
-    # test = read_test_set('Classification/rec.autos/test')
-    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-    #                 talk_prob)
-    # test = read_test_set('Classification/sci.electronics/test')
-    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-    #                 talk_prob)
-    # test = read_test_set('Classification/soc.religion.christian/test')
-    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-    #                 talk_prob)
-    # test = read_test_set('Classification/talk.politics.mideast/test')
-    # calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-    #                 talk_prob)
+    test = read_test_set('Classification/Comp.graphics/test')
+    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+                    talk_prob)
+    test = read_test_set('Classification/rec.autos/test')
+    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+                    talk_prob)
+    test = read_test_set('Classification/sci.electronics/test')
+    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+                    talk_prob)
+    test = read_test_set('Classification/soc.religion.christian/test')
+    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+                    talk_prob)
+    test = read_test_set('Classification/talk.politics.mideast/test')
+    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
+                    talk_prob)
 
 
 if __name__ == '__main__':
