@@ -1,8 +1,11 @@
 import glob
+import ast
 import math
+
 import numpy as np
 from nltk.stem import PorterStemmer
 import os
+import enchant
 
 comp_train_set_count = 0
 rec_train_set_count = 0
@@ -100,7 +103,7 @@ def tokens_count(tokens):
 def stemming(tokens):
     stemmer = PorterStemmer()
     stemmed_words = [stemmer.stem(token) for token in tokens]
-   # write_tokens('TextProcessing/stemming.txt', stemmed_words)
+    # write_tokens('TextProcessing/stemming.txt', stemmed_words)
     return stemmed_words
 
 
@@ -128,8 +131,187 @@ def text_processing():
             print("Invalid input. Please enter a number.")
 
 
+def damerau_levenshtein_distance(str1, str2):
+    len_str1 = len(str1)
+    len_str2 = len(str2)
+
+    # Create a matrix to store the distances
+    d = [[0] * (len_str2 + 1) for _ in range(len_str1 + 1)]
+
+    # Initialize the matrix
+    for i in range(len_str1 + 1):
+        d[i][0] = i
+    for j in range(len_str2 + 1):
+        d[0][j] = j
+
+    # Fill the matrix
+    for i in range(1, len_str1 + 1):
+        for j in range(1, len_str2 + 1):
+            cost = 0 if str1[i - 1] == str2[j - 1] else 1
+            d[i][j] = min(
+                d[i - 1][j] + 1,  # Deletion
+                d[i][j - 1] + 1,  # Insertion
+                d[i - 1][j - 1] + cost,  # Substitution
+            )
+            if i > 1 and j > 1 and str1[i - 1] == str2[j - 2] and str1[i - 2] == str2[j - 1]:
+                d[i][j] = min(d[i][j], d[i - 2][j - 2] + cost)  # Transposition
+
+    return d[len_str1][len_str2]
+
+
+def candidate_word(misspell_word):
+    english_dict = enchant.Dict("en_US")
+    suggestions = english_dict.suggest(misspell_word)
+
+    return suggestions
+
+
+def deletion(miss_spell, word):
+    for index in range(max(len(miss_spell), len(word))):
+        if index != len(miss_spell) - 1:
+            if miss_spell[index] != word[index] and index != 0:
+                y = word[index]
+                x = word[index - 1]
+                return x, y, 0
+            elif miss_spell[index] != word[index] and index == 0:
+                y = word[index]
+                x = word[index + 1]
+                return x, y, 0
+        if index == len(miss_spell) - 1:
+            y = word[index + 1]
+            x = miss_spell[index]
+            return x, y, 0
+
+
+def insertion(miss_spell, word):
+    for index in range(max(len(miss_spell), len(word))):
+        if index != len(word) - 1:
+            if miss_spell[index] != word[index] and index != 0:
+                y = miss_spell[index]
+                x = miss_spell[index - 1]
+                return x, y, 1
+            elif miss_spell[index] != word[index] and index == 0:
+                y = miss_spell[index]
+                x = miss_spell[index + 1]
+                return x, y, 1
+        if index == len(word) - 1:
+            y = miss_spell[index]
+            x = miss_spell[index-1]
+            return x, y, 1
+
+
+def sub_trans(miss_spell, word):
+    for index in range(len(miss_spell)):
+        if index != len(word) - 1:
+            if miss_spell[index] != word[index]:
+                if miss_spell[index + 1] != word[index + 1]:
+                    y = miss_spell[index + 1]
+                    x = miss_spell[index]
+                    return x, y, 3
+                else:
+                    y = word[index]
+                    x = miss_spell[index]
+                    return x, y, 2
+        if index == len(word) - 1:
+            if miss_spell[index] != word[index]:
+                y = word[index]
+                x = miss_spell[index]
+                return x, y, 2
+
+
+def check_type_of_confusion(miss_spell, word):
+    y = len(miss_spell) - len(word)
+    if y == -1:
+        x, y, z = deletion(miss_spell, word)
+    elif y == 1:
+        x, y, z = insertion(miss_spell, word)
+    elif y == 0:
+        x, y, z = sub_trans(miss_spell, word)
+    return x, y, z
+
+
+def noisy_channel_prob(x, y, z, dataset, del_confusion_matrix, ins_confusion_matrix, sub_confusion_matrix,
+                       trans_confusion_matrix):
+    if z == 0:
+        conf_matrix_col = x + y
+        prob = del_confusion_matrix[conf_matrix_col] / sum(conf_matrix_col in element for element in dataset)
+    elif z == 1:
+        conf_matrix_col = x + y
+        prob = ins_confusion_matrix[conf_matrix_col] / sum(x in element for element in dataset)
+    elif z == 2:
+        conf_matrix_col = x + y
+        prob = sub_confusion_matrix[conf_matrix_col] / sum(y in element for element in dataset)
+    elif z == 3:
+        conf_matrix_col = x + y
+        prob = trans_confusion_matrix[conf_matrix_col] / sum(conf_matrix_col in element for element in dataset)
+    return prob
+
+
 def spell_correction():
-    print("You selected Option 2")
+    words = read_file('./Spell Correction/spell-errors.txt')
+    real_words = read_file('./Spell Correction/test/Dictionary/dictionary.data')
+    dataset = read_file('./Spell Correction/test/Dictionary/Dataset.data')
+    dataset = dataset.split()
+    misspell_words = read_file('./Spell Correction/test/spell-testset.txt')
+    misspell_words = misspell_words.split()
+    del_confusion_matrix = read_file('./Spell Correction/test/Confusion Matrix/del-confusion.data')
+    ins_confusion_matrix = read_file('./Spell Correction/test/Confusion Matrix/ins-confusion.data')
+    sub_confusion_matrix = read_file('./Spell Correction/test/Confusion Matrix/sub-confusion.data')
+    trans_confusion_matrix = read_file('./Spell Correction/test/Confusion Matrix/Transposition-confusion.data')
+    del_confusion_matrix = ast.literal_eval(del_confusion_matrix)
+    ins_confusion_matrix = ast.literal_eval(ins_confusion_matrix)
+    sub_confusion_matrix = ast.literal_eval(sub_confusion_matrix)
+    trans_confusion_matrix = ast.literal_eval(trans_confusion_matrix)
+    real_words = real_words.split()
+    dataset_words_count = words_count(dataset)
+    # for miss_spell in misspell_words:
+    #     candidate_words = candidate_word(miss_spell)
+    #     main_candidate = []
+    #     if miss_spell in real_words:
+    #         main_candidate.append(miss_spell)
+    #     for candid in candidate_words:
+    #         distance = edit_distance(miss_spell, candid)
+    #         if distance == 1:
+    #             main_candidate.append(candid)
+    #     correct_word = []
+    #     for candid in main_candidate:
+    #         x, y, z = check_type_of_confusion(miss_spell, candid)
+    #         prob = noisy_channel_prob(x, y, z, dataset, del_confusion_matrix, ins_confusion_matrix,
+    #                                   sub_confusion_matrix, trans_confusion_matrix)
+    #         if candid in dataset_words_count:
+    #             prob *= (dataset_words_count[candid]) / sum(dataset_words_count.values())
+    #         else:
+    #             prob *= (1 / sum(dataset_words_count.values()))
+    #         prob *= 10**9
+    #         correct_word.append({candid: prob})
+    #     max_key = max(correct_word, key=correct_word.get)
+    #     print(max_key)
+    correct_wordss= ''
+    for mis_spell in misspell_words:
+        candidate_words = candidate_word(mis_spell)
+        main_candidate = []
+        if mis_spell in real_words:
+            main_candidate.append(mis_spell)
+        for candid in candidate_words:
+            candid = candid.lower()
+            distance = damerau_levenshtein_distance(mis_spell, candid)
+            if distance == 1 and ' ' not in candid and '-' not in candid:
+                main_candidate.append(candid)
+        correct_word = {}
+        for candid in main_candidate:
+            x, y, z = check_type_of_confusion(mis_spell, candid)
+            prob = noisy_channel_prob(x, y, z, dataset, del_confusion_matrix, ins_confusion_matrix,
+                                      sub_confusion_matrix, trans_confusion_matrix)
+            if candid in dataset_words_count:
+                prob *= (dataset_words_count[candid]) / sum(dataset_words_count.values())
+            else:
+                prob *= (1 / sum(dataset_words_count.values()))
+            prob *= 10 ** 9
+            correct_word[candid] = prob
+        max_key = max(correct_word, key=correct_word.get)
+        print(max_key)
+        correct_wordss += max_key + '\n'
+    write_file('./Spell Correction/output.txt', correct_wordss)
 
 
 def read_classification_files(directory_path):
@@ -219,7 +401,7 @@ def calculate_pc(test_set, words_dict, prob, all_train_set):
         if word in all_train_set:
             word_comp_prob = (word_count / (sum(words_dict.values()) + len(all_train_set)))
         else:
-            word_comp_prob = (word_count / (sum(words_dict.values()) + (len(all_train_set)+1)))
+            word_comp_prob = (word_count / (sum(words_dict.values()) + (len(all_train_set) + 1)))
         list.append(word_comp_prob)
     answer = np.log(list)
     answer = np.sum(answer)
@@ -228,7 +410,6 @@ def calculate_pc(test_set, words_dict, prob, all_train_set):
 
 def calculate_class(test_set, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob,
                     soc_prob, talk_prob, train_set_words):
-
     for i in range(len(test_set)):
         comp_test_set = test_set[i].split()
         comp_test_set = stemming(comp_test_set)
