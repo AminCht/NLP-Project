@@ -297,6 +297,9 @@ def spell_correction():
             distance = damerau_levenshtein_distance(mis_spell, candid)
             if distance == 1 and ' ' not in candid and '-' not in candid:
                 main_candidate.append(candid)
+        if len(main_candidate) == 0:
+            correct_wordss += mis_spell + '\n'
+            continue
         correct_word = {}
         for candid in main_candidate:
             x, y, z = check_type_of_confusion(mis_spell, candid)
@@ -309,8 +312,8 @@ def spell_correction():
             prob *= 10 ** 9
             correct_word[candid] = prob
         max_key = max(correct_word, key=correct_word.get)
-        print(max_key)
-        correct_wordss += max_key + '\n'
+        print(f'corrected of {mis_spell} is '+max_key)
+        correct_wordss += f'corrected of {mis_spell} is {max_key}' + f'\n'
     write_file('./Spell Correction/output.txt', correct_wordss)
 
 
