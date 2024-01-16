@@ -24,7 +24,7 @@ corrected of independant is independent
 corrected of independant is independent
 corrected of aranged is arranged
 corrected of arrainged is arranged
-poartry
+corrected of poartry is poartry
 corrected of poertry is poetry
 corrected of poetre is poetry
 corrected of poety is poets
@@ -35,43 +35,43 @@ corrected of triangulaur is triangular
 corrected of unexpcted is unexpected
 corrected of unexpeted is unexpected
 corrected of unexspected is unexpected
-stanerdizing
+corrected of stanerdizing is stanerdizing
 corrected of varable is variable
 corrected of futher is further
 corrected of monitering is monitoring
 corrected of biscits is biscuits
-biscutes
+corrected of biscutes is biscutes
 corrected of biscuts is biscuits
 corrected of bisquits is biscuits
-buiscits
-buiscuts
-bicycal
-bycicle
+corrected of buiscits is buiscits
+corrected of buiscuts is buiscuts
+corrected of bicycal is bicycal
+corrected of bycicle is bycicle
 corrected of bycycle is bicycle
 corrected of choise is choice
-opisite
+corrected of opisite is opisite
 corrected of oppasite is opposite
 corrected of oppesite is opposite
-oppisit
+corrected of oppisit is oppisit
 corrected of oppisite is opposite
 corrected of opposit is opposite
 corrected of oppossite is opposite
-oppossitte
+corrected of oppossitte is oppossitte
 corrected of cartains is captains
-certans
-courtens
-cuaritains
+corrected of certans is certans
+corrected of courtens is courtens
+corrected of cuaritains is cuaritains
 corrected of curtans is curtains
 corrected of curtians is curtains
-curtions
+corrected of curtions is curtions
 corrected of adress is address
 corrected of adres is acres
 corrected of liaision is liaison
 corrected of liason is liaison
 corrected of managment is management
 corrected of inconvienient is inconvenient
-inconvient
+corrected of inconvient is inconvient
 corrected of inconvinient is inconvenient
 corrected of vairiant is variant
 corrected of supercede is supersede
-superceed
+corrected of superceed is superceed

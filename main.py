@@ -96,8 +96,9 @@ def tokens_count(tokens):
             word_counts[token] += 1
         else:
             word_counts[token] = 1
-    for word, count in word_counts.items():
-        print(f"The word '{word}' appears {count} times in the list.")
+    # for word, count in word_counts.items():
+    #     print(f"The word '{word}' appears {count} times in the list.")
+    write_file('TextProcessing/Tokens_count.txt', str(word_counts))
 
 
 def stemming(tokens):
@@ -110,6 +111,7 @@ def stemming(tokens):
 def text_processing():
     file_path = 'TextProcessing/61085-0.txt'
     text_content = read_file(file_path)
+    text_content = text_content.lstrip('\ufeff')
     while True:
         print_text_processing_menu()
         tokens = tokenization(text_content)
@@ -122,7 +124,8 @@ def text_processing():
             elif operation == 3:
                 tokens_count(tokens)
             elif operation == 4:
-                stemming(tokens)
+                stemmed_words = stemming(tokens)
+                write_file('TextProcessing/stemmed.txt', str(stemmed_words))
             elif operation == 0:
                 break
             else:
@@ -196,7 +199,7 @@ def insertion(miss_spell, word):
                 return x, y, 1
         if index == len(word) - 1:
             y = miss_spell[index]
-            x = miss_spell[index-1]
+            x = miss_spell[index - 1]
             return x, y, 1
 
 
@@ -264,29 +267,7 @@ def spell_correction():
     trans_confusion_matrix = ast.literal_eval(trans_confusion_matrix)
     real_words = real_words.split()
     dataset_words_count = words_count(dataset)
-    # for miss_spell in misspell_words:
-    #     candidate_words = candidate_word(miss_spell)
-    #     main_candidate = []
-    #     if miss_spell in real_words:
-    #         main_candidate.append(miss_spell)
-    #     for candid in candidate_words:
-    #         distance = edit_distance(miss_spell, candid)
-    #         if distance == 1:
-    #             main_candidate.append(candid)
-    #     correct_word = []
-    #     for candid in main_candidate:
-    #         x, y, z = check_type_of_confusion(miss_spell, candid)
-    #         prob = noisy_channel_prob(x, y, z, dataset, del_confusion_matrix, ins_confusion_matrix,
-    #                                   sub_confusion_matrix, trans_confusion_matrix)
-    #         if candid in dataset_words_count:
-    #             prob *= (dataset_words_count[candid]) / sum(dataset_words_count.values())
-    #         else:
-    #             prob *= (1 / sum(dataset_words_count.values()))
-    #         prob *= 10**9
-    #         correct_word.append({candid: prob})
-    #     max_key = max(correct_word, key=correct_word.get)
-    #     print(max_key)
-    correct_wordss= ''
+    correct_wordss = ''
     for mis_spell in misspell_words:
         candidate_words = candidate_word(mis_spell)
         main_candidate = []
@@ -298,7 +279,7 @@ def spell_correction():
             if distance == 1 and ' ' not in candid and '-' not in candid:
                 main_candidate.append(candid)
         if len(main_candidate) == 0:
-            correct_wordss += mis_spell + '\n'
+            correct_wordss += f'corrected of {mis_spell} is {mis_spell}' + f'\n'
             continue
         correct_word = {}
         for candid in main_candidate:
@@ -312,7 +293,7 @@ def spell_correction():
             prob *= 10 ** 9
             correct_word[candid] = prob
         max_key = max(correct_word, key=correct_word.get)
-        print(f'corrected of {mis_spell} is '+max_key)
+        print(f'corrected of {mis_spell} is ' + max_key)
         correct_wordss += f'corrected of {mis_spell} is {max_key}' + f'\n'
     write_file('./Spell Correction/output.txt', correct_wordss)
 
@@ -344,8 +325,9 @@ def read_classification_files(directory_path):
     return combined_content
 
 
-def read_test_set(directory_path):
+def read_test_set(directory_path, test_sets_count):
     text_files = glob.glob(os.path.join(directory_path, '*.txt'))
+    test_sets_count += len(text_files)
     global files_name_list
     files_name_list = []
     content = []
@@ -356,7 +338,7 @@ def read_test_set(directory_path):
             file_text = file_text.lower()
             content.append(file_text)
 
-    return content
+    return content, test_sets_count
 
 
 def words_count(tokens):
@@ -411,26 +393,37 @@ def calculate_pc(test_set, words_dict, prob, all_train_set):
     return answer
 
 
-def calculate_class(test_set, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob,
-                    soc_prob, talk_prob, train_set_words):
-    for i in range(len(test_set)):
-        comp_test_set = test_set[i].split()
-        comp_test_set = stemming(comp_test_set)
-        word_comp_prob = calculate_pc(comp_test_set, comp_dict, comp_prob, train_set_words)
-        word_rec_prob = calculate_pc(comp_test_set, rec_dict, rec_prob, train_set_words)
-        word_sci_prob = calculate_pc(comp_test_set, sci_dict, sci_prob, train_set_words)
-        word_soc_prob = calculate_pc(comp_test_set, soc_dict, soc_prob, train_set_words)
-        word_talk_prob = calculate_pc(comp_test_set, talk_dict, talk_prob, train_set_words)
+def calculate_class(test_sets, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob,
+                    soc_prob, talk_prob, train_set_words, corrected_class, tp):
+    for i in range(len(test_sets)):
+        test_set = test_sets[i].split()
+        test_set = stemming(test_set)
+        word_comp_prob = calculate_pc(test_set, comp_dict, comp_prob, train_set_words)
+        word_rec_prob = calculate_pc(test_set, rec_dict, rec_prob, train_set_words)
+        word_sci_prob = calculate_pc(test_set, sci_dict, sci_prob, train_set_words)
+        word_soc_prob = calculate_pc(test_set, soc_dict, soc_prob, train_set_words)
+        word_talk_prob = calculate_pc(test_set, talk_dict, talk_prob, train_set_words)
         if word_comp_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
             print(f"{files_name_list[i]} belong to comp")
+            if corrected_class == 'Comp':
+                tp += 1
         elif word_rec_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
             print(f"{files_name_list[i]} belong to rec")
+            if corrected_class == 'rec':
+                tp += 1
         elif word_sci_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
             print(f"{files_name_list[i]} belong to sci")
+            if corrected_class == 'sci':
+                tp += 1
         elif word_soc_prob == max(word_comp_prob, word_rec_prob, word_sci_prob, word_soc_prob, word_talk_prob):
             print(f"{files_name_list[i]} belong to soc")
+            if corrected_class == 'soc':
+                tp += 1
         else:
             print(f"{files_name_list[i]} belong to talk")
+            if corrected_class == 'talk':
+                tp += 1
+    return tp
 
 
 def text_classification():
@@ -457,21 +450,31 @@ def text_classification():
     talk_dict = words_count(talk_train_set)
     train_set_count = words_count(all_train_sets)
     comp_prob, rec_prob, sci_prob, soc_prob, talk_prob = calculate_class_probabilities()
-    test = read_test_set('Classification/Comp.graphics/test')
-    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-                    talk_prob, train_set_count)
-    test = read_test_set('Classification/rec.autos/test')
-    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-                    talk_prob, train_set_count)
-    test = read_test_set('Classification/sci.electronics/test')
-    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-                    talk_prob, train_set_count)
-    test = read_test_set('Classification/soc.religion.christian/test')
-    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-                    talk_prob, train_set_count)
-    test = read_test_set('Classification/talk.politics.mideast/test')
-    calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob, soc_prob,
-                    talk_prob, train_set_count)
+    tp = 0
+    test_sets_count = 0
+    test, test_sets_count = read_test_set('Classification/Comp.graphics/test', test_sets_count)
+    tp = calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob,
+                         soc_prob,
+                         talk_prob, train_set_count, 'Comp', tp)
+    test, test_sets_count = read_test_set('Classification/rec.autos/test', test_sets_count)
+    tp = calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob,
+                         soc_prob,
+                         talk_prob, train_set_count, 'rec', tp)
+    test, test_sets_count = read_test_set('Classification/sci.electronics/test', test_sets_count)
+    tp = calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob,
+                         soc_prob,
+                         talk_prob, train_set_count, 'sci', tp)
+    test, test_sets_count = read_test_set('Classification/soc.religion.christian/test', test_sets_count)
+    tp = calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob,
+                         soc_prob,
+                         talk_prob, train_set_count, 'soc', tp)
+    test, test_sets_count = read_test_set('Classification/talk.politics.mideast/test', test_sets_count)
+    tp = calculate_class(test, comp_dict, rec_dict, sci_dict, soc_dict, talk_dict, comp_prob, rec_prob, sci_prob,
+                         soc_prob,
+                         talk_prob, train_set_count, 'talk', tp)
+    accuracy = tp / test_sets_count
+
+    print(f'accuracy is {accuracy * 100}')
 
 
 if __name__ == '__main__':
