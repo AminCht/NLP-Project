@@ -482,7 +482,6 @@ if __name__ == '__main__':
         print_menu()
         try:
             choice = int(input("Enter your choice (1-3, or 0 to exit): "))
-
             if choice == 1:
                 text_processing()
             elif choice == 2:
@@ -490,7 +489,7 @@ if __name__ == '__main__':
             elif choice == 3:
                 text_classification()
             elif choice == 0:
-                print("Exiting the program. Goodbye!")
+                print("Exiting the program.")
                 break
             else:
                 print("Invalid choice. Please enter a number between 0 and 3.")
